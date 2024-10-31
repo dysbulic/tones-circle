@@ -1,6 +1,11 @@
+type Opts = {
+  ramp?: number
+  dur?: number
+}
+
 export const beep = (
   freq: number,
-  { ramp = 0.01, dur = 0.1 },
+  { ramp = 0.01, dur = 0.1 }: Opts = {},
 ) => {
   const ctx = new AudioContext()
   const osc = ctx.createOscillator()
