@@ -1,21 +1,34 @@
 <script lang="ts">
   import clsx from 'clsx'
   import { beep } from '$lib/beep'
-  import { A432 } from '$lib/notes'
+  import * as NoteLib from '$lib/notes'
 
   type Indices = { i: number, j: number }
 
-  let segCount = $state(12)
-  let space = $state(1 / 5)
+  const {
+    segCount = 12,
+    space = 1 / 5,
+    centerR = 5,
+    delay = 500,
+    noteSet = 'A432',
+  }: {
+    segCount?: number,
+    space?: number,
+    centerR?: number,
+    delay?: number,
+    noteSet?: 'A432' | 'A440',
+  } = $props()
+
   let width = $derived(1 / space)
-  let centerR = $state(5)
   let maxW = $derived(50 - centerR / 2)
   const notes = (
-    A432.map((octave) => Object.values(octave)).flat()
+    NoteLib[noteSet].map((octave) => (
+      Object.entries(octave)
+      .map(([note, freq]) => ({ note, freq }))
+    )).flat()
   )
   let step = $state(0)
   let selected = $state<Array<Indices>>([])
-  let delay = $state(500)
 
   setInterval(() => {
     step = (step + 1) % segCount
@@ -25,16 +38,16 @@
       .map(({ i }) => i)
     )
     noteIdxs.forEach((idx: number) => {
-      beep(notes[idx])
+      beep(notes[idx].freq)
     })
   }, delay)
 
   const id = (i: number, j: number) => (
-    i + segCount + j
+    i * segCount + j
   )
 
   const toggle = (idxs: Indices) => {
-    const match = ({ i: ii, j: jj }) => (
+    const match = ({ i: ii, j: jj }: Indices) => (
       ii === idxs.i && jj === idxs.j
     )
     const found = !!selected.find(match)
@@ -92,7 +105,13 @@
             ) && 'selected',
           )}
           use:select
-        />
+        >
+          <title>{
+            Math.floor(i / segCount)
+          }:{
+            notes[i % segCount - 1]?.note
+          }</title>
+        </circle>
       {/each}
     {/each}
   </g>
@@ -120,7 +139,7 @@
   .arcs-0 {
     stroke-opacity: 0.5;
   }
-  .arcs-5.active {
+  .arcs-5.active, .arcs-7.active {
     stroke: purple;
   }
   circle.active:hover {
@@ -134,5 +153,8 @@
   .selected {
     stroke: yellow;
     stroke-width: 3vmin;
+  }
+  .selected:hover {
+    stroke: cornflowerblue;
   }
 </style>
